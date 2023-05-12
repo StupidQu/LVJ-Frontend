@@ -1,0 +1,118 @@
+<html>
+<meta charSet="UTF-8" />
+
+<head>
+    <title>LVJ - Submit</title>
+    <script type="text/javascript" async
+        src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML">
+        </script>
+    <script type="text/x-mathjax-config">
+        MathJax.Hub.Config({
+          tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]},
+        });
+    </script>
+    <script src="/static/marked.min.js"></script>
+    <script src="/static/jquery-1.9.0.min.js"></script>
+    <script src="/static/jquery.cookie.min.js"></script>
+</head>
+
+<style>
+    .tit {
+        margin: auto;
+        width: 80%;
+        height: auto;
+        /* outline: auto; */
+        /* outline-color: gainsboro; */
+    }
+
+    .pro {
+        margin: auto;
+        width: 80%;
+        height: max-content;
+        outline: auto;
+        outline-color: gainsboro;
+    }
+
+    .cont {
+        margin-left: 1%;
+        margin-right: 1%;
+    }
+
+    .code {
+        width: 100%;
+    }
+</style>
+
+<body>
+    <div class="tit">
+        <h1>LVJ Contest System - Submit</h1>
+    </div>
+    <div class="pro">
+        <div class="cont">
+            <h2>
+                <p id="tit"></p>
+            </h2>
+            <form action="/api/Submit" method="POST">
+                Code:
+                <textarea class="code" type="text" name="code" rows="45"></textarea>
+                <input style="margin-bottom: 1%;" type="submit" onclick="return check_input()" value="提交">
+                <!-- <input id="prob" hidden="true" name="prob" value="%PROB%"> -->
+                <input id="prob">
+                <input id="user">
+            </form>
+            <script>
+                tokene = ""
+                function check_input() {
+                    console.log($("#code").length)
+                    if ($("#code").length) {
+                        alert("代码过短");
+                        return false;
+                    }
+                    return true;
+                }
+                function get_user_name() {
+                    return $.cookie('user');
+                }
+                $(document).ready(function () {
+                    $.get('/api/CreateOrGetToken?user=' + get_user_name(), function (data, res) {
+                        token = JSON.parse(data)
+                        tokene = token['token']
+                    })
+                    var prob = window.location.search.replace('?prob=', '');
+                    $.get("/api/ProblemDetail?prob=" + prob, function (data, res) {
+                        var pr = JSON.parse(data);
+                        $("#tit").replaceWith('Submit solution for ' + pr['n'] + ' ' + pr['t']);
+                        $("#prob").replaceWith("<input hidden=\"true\" name=\"prob\" value=\"" + prob + "\">")
+                        $("#user").replaceWith("<input hidden=\"true\" name=\"token\" value=\"" + tokene + "\">")
+                    });
+                })
+            </script>
+            <script>
+                function get_al() {
+                    return $.cookie('al');
+                }
+                function checkAlerts() {
+                    $.get('https://api-cdn.zshfoj.com/api/GetAlerts', function (data, res) {
+                        let alerts = data.split('\n'), real = 0;
+                        for (let qq of alerts) {
+                            let f = qq.split(',');
+                            if (f.length < 2) continue;
+                            let las = get_al();
+                            console.log(las);
+                            if (las == undefined || las < f[0]) {
+                                alert(f[1]);
+                            }
+                            ++real;
+                        }
+                        $.cookie('al', real);
+                    })
+                }
+                var int = self.setInterval('checkAlerts()', 5000);
+            </script>
+            <!-- <p style="margin-bottom: 1%;">Please notice that, HVJudge is not a real OJ. It will send your solution to another OJ in order to get result.</p> -->
+        </div>
+    </div>
+
+</body>
+
+</html>

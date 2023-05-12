@@ -1,0 +1,92 @@
+<html>
+<meta charSet="UTF-8" />
+
+<head>
+    <title>LVJ - Edit Problem</title>
+    <script type="text/javascript" async
+        src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML">
+        </script>
+    <script type="text/x-mathjax-config">
+        MathJax.Hub.Config({
+          tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]},
+        });
+    </script>
+    <script src="/static/marked.min.js"></script>
+    <script src="/static/jquery-1.9.0.min.js"></script>
+    <script src="/static/jquery.cookie.min.js"></script>
+    <script src="/static/editormd/editormd.js"></script>
+    <script src="/static/he.min.js"></script>
+    <link rel="stylesheet" href="/static/editormd/css/editormd.css" />
+</head>
+
+<style>
+    .tit {
+        margin: auto;
+        width: 80%;
+        height: auto;
+        /* outline: auto; */
+        /* outline-color: gainsboro; */
+    }
+
+    .pro {
+        margin: auto;
+        width: 80%;
+        height: max-content;
+        outline: auto;
+        outline-color: gainsboro;
+    }
+
+    .cont {
+        margin-left: 1%;
+        margin-right: 1%;
+    }
+
+    .code {
+        width: 100%;
+    }
+
+    .sub {
+        margin-bottom: 1%;
+    }
+</style>
+
+<body>
+    <div class="tit">
+        <h1>LVJ Contest System - Edit Problem</h1>
+    </div>
+    <div class="pro">
+        <div class="cont">
+            <form action="/api/UpdateProblem" method="POST">
+                <div id="editor">
+                    <textarea class="editor-markdown-textarea" name="code">### Hello Editor.md!</textarea>
+                </div>
+                <input type="submit" class="sub">
+                <input id="prob">
+            </form>
+            <script>
+                $(document).ready(function () {
+                    var editor;
+                    var prob = window.location.search.replace('?prob=', '');
+                    $.get("/api/ProblemDetail?prob=" + prob, function (data, res) {
+                        var pr = JSON.parse(data);
+                        var str = he.decode(pr['d']);
+                        console.log(str);
+                        $("#prob").replaceWith("<input hidden=\"true\" name=\"prob\" value=\"" + prob + "\">")
+                        editor = editormd("editor", {
+                            width: "95%",
+                            height: "700px",
+                            image: true,
+                            markdown: str,
+                            path: "static/editormd/lib/"  // Autoload modules mode, codemirror, marked... dependents libs path
+                        });
+                        // editor.setMarkdown('AAA');
+                    });
+                })
+            </script>
+            <!-- <p style="margin-bottom: 1%;">Please notice that, HVJudge is not a real OJ. It will send your solution to another OJ in order to get result.</p> -->
+        </div>
+    </div>
+
+</body>
+
+</html>

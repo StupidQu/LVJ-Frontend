@@ -1,0 +1,132 @@
+<html>
+<meta charSet="UTF-8" />
+
+<head>
+    <title>LVJ - Problem Detail</title>
+    <script type="text/x-mathjax-config">
+        MathJax.Hub.Config({
+          tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]},
+        });
+    </script>
+    <script src="/static/jquery-1.9.0.min.js"></script>
+    <script src="/static/marked.min.js"></script>
+</head>
+
+<style>
+    .tit {
+        margin: auto;
+        width: 80%;
+        height: auto;
+        /* outline: auto; */
+        /* outline-color: gainsboro; */
+    }
+
+    .pro {
+        margin: auto;
+        margin-bottom: 20%;
+        width: 80%;
+        height: max-content;
+        outline: auto;
+        outline-color: gainsboro;
+    }
+
+    .cont {
+        margin-left: 1%;
+        margin-right: 1%;
+        margin-bottom: 1%;
+    }
+
+    .lim {
+        margin: auto;
+        margin-bottom: 2%;
+        width: max-content;
+        height: max-content;
+    }
+</style>
+
+<body>
+    <div class="tit">
+        <h1>LVJ Contest System - Status</h1>
+    </div>
+    <div class="pro">
+        <div class="cont">
+            <h2 id="tit">%num% Records</h2>
+            <div class="lim">
+                <!-- <h3>Limitation</h3> -->
+                Username:<input id="user"> Problem:<input id="prob"> Result(AC/UAC):<input id="resu"> <button
+                    onclick="submit()">筛选</button>
+            </div>
+            <table id="myTable" border="1" cellpadding="0" cellspacing="0" width="95%"
+                style="text-align: center; margin: auto; margin-bottom: 2%;">
+                <tr id="FirstT">
+                    <td>运行 ID</td>
+                    <td>选手</td>
+                    <td>题目</td>
+                    <td>结果</td>
+                    <td>得分</td>
+                </tr>
+            </table>
+            <script>
+                $(document).ready(function () {
+                    submit();
+                })
+                function submit() {
+                    $('#tit').replaceWith('<h2 id="tit">%num% Records</h2>')
+                    $('#myTable').empty();
+                    $('#myTable').append('<tr id="FirstT">\
+                    <td>运行 ID</td>\
+                    <td>选手</td>\
+                    <td>题目</td>\
+                    <td>结果</td>\
+                    <td>得分</td>\
+                </tr>')
+                    let query = "?a=1";
+                    if ($('#user').val() != "") {
+                        query += "&user=" + $('#user').val();
+                    }
+                    if ($('#prob').val() != "") {
+                        query += "&prob=" + $('#prob').val();
+                    }
+                    if ($('#resu').val() != "") {
+                        query += "&result=" + ($('#resu').val().toLowerCase() == 'ac' ? 12 : 14);
+                    }
+                    $.get('/api/GetRecordsList' + query, function (data, res) {
+                        var pr = JSON.parse(data);
+                        pr = pr['records'];
+                        pr.sort(function (a, b) {
+                            // console.log(a['rid']);
+                            return b['rid'] - a['rid'];
+                        });
+                        console.log(pr);
+                        for (let r of pr) {
+                            tr = document.createElement('tr');
+                            td = document.createElement('td');
+                            td.innerHTML = "<a href=/record?rid=%a%>".replace('%a%', r['rid']) + r['rid'] + "</a>";
+                            tr.appendChild(td);
+                            r = r['info'];
+                            td = document.createElement('td');
+                            td.innerHTML = r['user'];
+                            tr.appendChild(td);
+                            td = document.createElement('td');
+                            td.innerHTML = r['prob'];
+                            tr.appendChild(td);
+                            td = document.createElement('td');
+                            td.innerHTML = (r['status'] == 14 ? "<font color=\"red\">UAC</font>" : "<font color=\"green\">AC</font>");
+                            tr.appendChild(td);
+                            td = document.createElement('td');
+                            td.innerHTML = r['score'];
+                            tr.appendChild(td);
+                            $('#myTable').append(tr);
+                        }
+                        $("#tit").replaceWith('<h2 id="tit">%num% Records</h2>'.replace('%num%', pr.length))
+                    })
+                }
+            </script>
+            <a id="submit"></a>
+            <a href="/index"><button style="margin-bottom: 1%;">返回首页</button></a>
+        </div>
+    </div>
+
+</body>
+
+</html>

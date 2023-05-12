@@ -1,0 +1,238 @@
+<html>
+<meta charSet="UTF-8" />
+<meta http-equiv="Access-Control-Allow-Origin" content="*">
+
+<head>
+    <title>LVJ - Home</title>
+    <script type="text/javascript" async
+        src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML">
+        </script>
+    <script type="text/x-mathjax-config">
+        MathJax.Hub.Config({
+          tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]},
+        });
+    </script>
+    <script src="/static/marked.min.js"></script>
+    <script src="/static/jquery.min.js"></script>
+    <script src="/static/jquery.cookie.min.js"></script>
+    <script type="text/javascript" charset="utf8" src="/static/datatables.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="/static/jquery.dataTables.css">
+</head>
+
+<style>
+    .tit {
+        margin: auto;
+        width: 80%;
+        height: auto;
+        /* outline: auto; */
+        /* outline-color: gainsboro; */
+    }
+
+    .pro {
+        margin: auto;
+        margin-bottom: 20%;
+        width: 80%;
+        height: max-content;
+        outline: auto;
+        outline-color: gainsboro;
+    }
+
+    .cont {
+        margin-left: 1%;
+        margin-right: 1%;
+        margin-bottom: 1%;
+    }
+</style>
+
+<body>
+    <div class="tit">
+        <h1>LVJ Contest System - ProblemsList</h1>
+    </div>
+    <div class="pro">
+        <div class="cont">
+            <h2>
+                <p id="probNum"></p>
+            </h2>
+            <table id="problems_table" class="display">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>题目名</th>
+                        <th>得分</th>
+                    </tr>
+                </thead>
+                <tbody id="list_prob">
+
+                </tbody>
+            </table>
+
+        </div>
+        <div class="cont" id="ann">
+            <h2>公告</h2>
+
+        </div>
+        <div class="cont">
+            <h2>Rank List (Ctrl+F to Search)</h2>
+            <table id="myTable" class="display">
+                <thead>
+                    <tr id="FirstT">
+                        <td>排名</td>
+                        <td>选手</td>
+                        <td>总分</td>
+                    </tr>
+                </thead>
+                <tbody id="mybb">
+
+                </tbody>
+            </table>
+            <p>诚信考试，作弊可耻。用户：<span id="username">undefined</span>。</p>
+        </div>
+    </div>
+    <script>
+        var now = 0, problems = [], user, token, okFirst = false;
+        $(document).ready(function () {
+            function get_user_name() {
+                return $.cookie('user');
+            }
+            // console.log(document.cookie)
+            if (document.cookie == "" || document.cookie.includes('user') == false) {
+                user = prompt("请输入用户名（唯一身份标识）：");
+                $.get('/api/CreateOrGetToken?user=' + user, function (data, res) {
+                    token = JSON.parse(data)
+                    $('#username').text(user + '(' + token['token'] + ')');
+                    $.cookie('user', user);
+                })
+            }
+            else {
+                user = get_user_name();
+                $.get('/api/CreateOrGetToken?user=' + user, function (data, res) {
+                    token = JSON.parse(data)
+                    $('#username').text(user + '(' + token['token'] + ')');
+                })
+            }
+            $.get('/api/GetAnnouncement', function (data, res) {
+                $("#ann").append(marked.parse(data));
+            })
+            $.get("/api/Problems", function (data, res) {
+                var pr = JSON.parse(data), u = "", score = "";
+                problems = pr['p'];
+                $.get("/api/GetScore?user=" + get_user_name(), function (data, res) {
+                    score = JSON.parse(data);
+                    if (score['success'] == false) {
+                        score['details'] = {};
+                    }
+                    $("#probNum").replaceWith(pr['n'].toString() + ' Problems');
+                    for (let prob of problems) {
+                        let tr = document.createElement('tr');
+                        let td = document.createElement('td');
+                        td.innerHTML = prob['d'];
+                        tr.append(td);
+                        let td_ = document.createElement('td');
+                        td_.innerHTML = prob['d'];
+                        $("#FirstT").append(td_);
+                        let td2 = document.createElement('td');
+                        td2.innerHTML = '<a href=/prob?prob=' + prob['d'] + '>' + prob['m'] + '</a>';
+                        tr.append(td2);
+                        let td3 = document.createElement('td');
+                        if (score['details'][prob['d']] == undefined) td3.innerHTML = "0"
+                        else td3.innerHTML = score['details'][prob['d']]['score'];
+                        tr.append(td3);
+                        $("#list_prob").append(tr);
+                        // console.log(tr);
+                    }
+                    setTimeout(function () {
+                        $('#problems_table').DataTable({
+                            'searching': false,
+                            'columnDefs': [
+                                {
+                                    targets: [0, 1, 2],
+                                    className: 'dt-body-center'
+                                }
+                            ],
+                            'info': false,
+                            'paging': false
+                        });
+                        $('#myTable').DataTable({
+                            'searching': false,
+                            'info': false,
+                            'paging': false
+                        });
+                    }, 500)
+                })
+
+            });
+            $.get('/api/GetRankList', function (data, res) {
+                var rk = JSON.parse(data);
+                rk.sort(function (a, b) {
+                    return b['score']['score'] - a['score']['score']
+                })
+                console.log(rk);
+                rkkn = 0;
+                for (var p of rk) {
+                    tr = document.createElement('tr')
+                    // console.log(p)
+                    td = document.createElement('td');
+                    td.innerHTML = ++rkkn
+                    tr.appendChild(td);
+                    td = document.createElement('td');
+                    td.innerHTML = p['name']
+                    tr.appendChild(td);
+                    td = document.createElement('td');
+                    td.innerHTML = p['score']['score']
+                    tr.appendChild(td);
+                    var pp = Object.entries(p['score']['details']);
+                    pp.sort(function (a, b) {
+                        return a[0].localeCompare(b[0]);
+                    })
+                    var las = 'A'.charCodeAt();
+                    for (var [_, e] of pp) {
+                        while (_.charCodeAt() - las > 0) {
+                            td = document.createElement('td');
+                            td.innerHTML = "";
+                            tr.appendChild(td);
+                            ++las;
+                        }
+                        td = document.createElement('td');
+                        td.innerHTML = '<a href="/record?rid=' + e['rid'] + '">' + e['score'] + '</a> (+' + e['tries'] + ')'
+                        // console.log(td.innerHTML)
+                        tr.appendChild(td);
+                        ++las;
+                    }
+                    while (las != problems.length + 'A'.charCodeAt()) {
+                        var td = document.createElement('td');
+                        td.innerHTML = "";
+                        tr.appendChild(td);
+                        ++las;
+                    }
+                    $('#mybb').append(tr);
+                }
+                okFirst = true;
+            })
+        });
+    </script>
+    <script>
+        function get_al() {
+            return $.cookie('al');
+        }
+        function checkAlerts() {
+            $.get('https://api-cdn.zshfoj.com/api/GetAlerts', function (data, res) {
+                console.log(data);
+                let alerts = data.split('\n'), real = 0;
+                for (let qq of alerts) {
+                    let f = qq.split(',');
+                    if (f.length < 2) continue;
+                    let las = get_al();
+                    console.log(las);
+                    if (las == undefined || las < f[0]) {
+                        alert(f[1]);
+                    }
+                    ++real;
+                }
+                $.cookie('al', real);
+            })
+        }
+        var int = self.setInterval('checkAlerts()', 5000);
+    </script>
+</body>
+
+</html>

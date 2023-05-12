@@ -1,0 +1,100 @@
+<html>
+<meta charSet="UTF-8" />
+
+<head>
+    <title>LVJ - Problem Detail</title>
+    <script type="text/x-mathjax-config">
+        MathJax.Hub.Config({
+          tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]},
+        });
+    </script>
+    <script src="/static/jquery-1.9.0.min.js"></script>
+    <script src="/static/marked.min.js"></script>
+    <script src="/static/jquery.cookie.min.js"></script>
+</head>
+
+<style>
+    .tit {
+        margin: auto;
+        width: 80%;
+        height: auto;
+        /* outline: auto; */
+        /* outline-color: gainsboro; */
+    }
+
+    .pro {
+        margin: auto;
+        margin-bottom: 20%;
+        width: 80%;
+        height: max-content;
+        outline: auto;
+        outline-color: gainsboro;
+    }
+
+    .cont {
+        margin-left: 1%;
+        margin-right: 1%;
+        margin-bottom: 1%;
+    }
+</style>
+
+<body>
+    <div class="tit">
+        <h1>LVJ Contest System - Problem</h1>
+    </div>
+    <div class="pro">
+        <div class="cont">
+            <h2>
+                <p id="tit"></p>
+            </h2>
+            <div id="content"></div>
+            <script>
+                $(document).ready(function () {
+                    var prob = window.location.search.replace('?prob=', '');
+                    console.log(prob);
+                    $.get("/api/ProblemDetail?prob=" + prob, function (data, res) {
+                        var pr = JSON.parse(data);
+                        $("#tit").replaceWith(pr['n'] + ' ' + pr['t']);
+                        $("#content").replaceWith(marked.parse(pr['d']));
+                        $("#submit").replaceWith("<a href=\"submit?prob=" + prob + "\"><button style=\"margin-bottom: 1%;\">提交</button></a>")
+                    });
+                    $.getScript("https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML", function () {
+                        MathJax.Hub.Config({
+                            tex2jax: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+                        });
+                        MathJax.Hub.Queue(["Typeset", MathJax.Hub]);
+                    })
+                })
+                // document.getElementById('content').innerHTML =
+                //     marked.parse('%CONTENT%');
+            </script>
+            <script>
+                function get_al() {
+                    return $.cookie('al');
+                }
+                function checkAlerts() {
+                    $.get('https://api-cdn.zshfoj.com/api/GetAlerts', function (data, res) {
+                        let alerts = data.split('\n'), real = 0;
+                        for (let qq of alerts) {
+                            let f = qq.split(',');
+                            if (f.length < 2) continue;
+                            let las = get_al();
+                            console.log(las);
+                            if (las == undefined || las < f[0]) {
+                                alert(f[1]);
+                            }
+                            ++real;
+                        }
+                        $.cookie('al', real);
+                    })
+                }
+                var int = self.setInterval('checkAlerts()', 5000);
+            </script>
+            <a id="submit"></a>
+            <a href="/index"><button style="margin-bottom: 1%;">返回首页</button></a>
+        </div>
+    </div>
+
+</body>
+
+</html>
